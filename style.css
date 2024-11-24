@@ -1,4 +1,4 @@
-main{
+main {
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -8,14 +8,14 @@ main{
     background-color: #f1f1f1;
 }
 
-main div{
+main div {
     display: flex;
-    gap: 20px;
+    gap: 100px;
     align-items: center;
     height: 200px;
 }
 
-img{
+img {
     width: 100px;
     height: 100px;
     display: inline-block;

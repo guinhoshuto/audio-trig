@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <title>pew pew pew</title>
     <link rel="stylesheet" href="style.css">
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/addons/p5.sound.js"></script> -->
   </head>
   <body>
     <div id="main"></div>
@@ -17,14 +15,14 @@
           imagem: 'marcellus.jpg'
         },
         {
-          nome: 'Dan',
+          nome: 'Dan', 
           audio: 'vozb',
-          imagem: 'marcellus.jpg'
+          imagem: 'dan.jpg'
         },
         {
           nome: 'Cardoso',
           audio: 'vozc',
-          imagem: 'marcellus.jpg'
+          imagem: 'cardoso.png'
         },
         // {
         //   nome: 'Tayná',
@@ -33,197 +31,77 @@
         // }
       ]
 
-      const elements = []
-      participantes.forEach(p => {
-        createImageElement(p.imagem, p.nome)
-        const audioElement = createAudioElement(p.audio, p.nome)
-        elements.push({
-          audio: audioElement,
-          imagem: p.imagem,
-          nome: p.nome
+      let audioContext;
+      const startOpacity = .2;
+      
+      const startButton = document.createElement('button');
+      startButton.textContent = 'Start Audio';
+      document.body.insertBefore(startButton, document.getElementById('main'));
+
+        audioContext = new AudioContext();
+        startButton.style.display = 'none';
+        
+        const elements = []
+        participantes.forEach(p => {
+          createImageElement(p.imagem, p.nome)
+          const audioElement = createAudioElement(p.audio, p.nome)
+          elements.push({
+            audio: audioElement,
+            imagem: p.imagem,
+            nome: p.nome
+          })
         })
-      })
 
       function createImageElement(image, id) {
         const divElement = document.createElement('div');
         divElement.id = id;
         const imageElement = document.createElement('img');
         imageElement.src = `./src/${image}`;
+        imageElement.style.opacity = startOpacity; 
         divElement.appendChild(imageElement);
         document.getElementById('main').appendChild(divElement)
       }
 
       function createAudioElement(audio, id) {
         const audioElement = document.createElement('audio');
-        audioElement.src = `${audio}.flac`;
+        audioElement.src = `./${audio}.flac`;
         audioElement.autoplay = true;
         audioElement.playsInline = true;
         audioElement.load();
 
-        // audioElement.addEventListener('play', function() {
-          const audioContext = new AudioContext();
-          const source = audioContext.createMediaElementSource(audioElement);
-          const analyser = audioContext.createAnalyser();
-          source.connect(analyser);
-          analyser.connect(audioContext.destination);
+        const source = audioContext.createMediaElementSource(audioElement);
+        const analyser = audioContext.createAnalyser();
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
 
-          analyser.fftSize = 256;
-          const bufferLength = analyser.frequencyBinCount;
-          const dataArray = new Uint8Array(bufferLength);
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
 
-          function animate() {
-            requestAnimationFrame(animate);
-            analyser.getByteTimeDomainData(dataArray);
-            let sum = 0;
-            for (let i = 0; i < bufferLength; i++) {
-              sum += dataArray[i];
-            }
-            let average = sum / bufferLength;
-            let db = 20 * Math.log10(average / 128);
+        let currentOpacity = startOpacity;
+        const smoothingFactor = 0.1; 
 
-            document.getElementById(id).getElementsByTagName('img')[0].style.opacity = `${.5 + db*10}`;
-            console.log('Average level:', db);
+        function animate() {
+          requestAnimationFrame(animate);
+          analyser.getByteTimeDomainData(dataArray);
+          
+          let sum = 0;
+          for (let i = 0; i < bufferLength; i++) {
+            sum += Math.abs(dataArray[i] - 128); 
           }
+          let average = sum / bufferLength;
+          
+          const targetOpacity = average > 1 ? 1 : startOpacity;
+          currentOpacity += (targetOpacity - currentOpacity) * smoothingFactor;
+          
+          const imgElement = document.getElementById(id).getElementsByTagName('img')[0];
+          imgElement.style.opacity = currentOpacity;
+        }
 
-          animate();
-        // });
+        animate();
+        return audioElement;
       }
-
-      // let audioElement = document.createElement('audio');
-      // audioElement.src = 'voza.flac';
-      // audioElement.autoplay = true;
-      // audioElement.playsInline = true;
-      // audioElement.load();
 
     </script>
-    <!-- <script>
-      const imageSize = 50
-      const gap = 20
-      // let voza, vozb, vozc, vozd;
-      // let host1, host2, host3, host4;
-      const participantes = [
-        {
-          nome: 'Marcellus',
-          audio: 'voza',
-          imagem: 'marcellus.jpg'
-        },
-        {
-          nome: 'Dan',
-          audio: 'vozb',
-          imagem: 'marcellus.jpg'
-        },
-        {
-          nome: 'Cardoso',
-          audio: 'vozc',
-          imagem: 'marcellus.jpg'
-        },
-        {
-          nome: 'Tayná',
-          audio: 'vozd',
-          imagem: 'marcellus.jpg'
-        }
-      ]
-
-      let assets = []
-
-      function preload() {
-        // for (let i = 0; i < participantes.length; i++) {
-        //   console.log(participantes[i].audio)
-        //   const voz = loadSound(`./${participantes[i].audio}.flac`);
-        //   const image = loadImage(`/src/${participantes[i].imagem}`);
-        //   const amp = new p5.Amplitude();
-        //   voz.connect(amp)
-        //   assets.push({
-        //     audio: voz,
-        //     imagem: image,
-        //   });
-        // }
-        for (let i = 0; i < participantes.length; i++) {
-          console.log('uai')
-          const voz = loadSound(`./${participantes[i].audio}.flac`);
-          const host = loadImage(`/src/${participantes[i].imagem}`);
-          assets.push({
-            audio: voz,
-            imagem: host,
-            amp: null,
-          });
-        }
-      }
-
-      function setup() {
-        createCanvas(400, 400);
-        background(220);
-        // ampa = new p5.Amplitude();
-        // ampb = new p5.Amplitude();
-        // ampc = new p5.Amplitude();
-        // ampd = new p5.Amplitude();
-
-        for (let i = 0; i < assets.length; i++) {
-          assets[i].audio.play()
-          assets[i].amp = new p5.Amplitude();
-          assets[i].audio.connect(assets[i].amp)
-        }
-        // voza.play()
-        // voza.connect(ampa)
-        // vozb.play()
-        // vozb.connect(ampb)
-        // vozc.play()
-        // vozc.connect(ampc)
-        // vozd.play()
-        // vozd.connect(ampd)
-
-        mask1 = createGraphics(imageSize, imageSize);
-        mask2 = createGraphics(imageSize, imageSize);
-        mask3 = createGraphics(imageSize, imageSize);
-        mask4 = createGraphics(imageSize, imageSize);
-
-
-        // stroke("red")
-        // strokeWeight(2)
-        // rect(0, 0, imageSize + 1, imageSize + 1)
-        // const hostProfile1 = image(host1, 0, 0, imageSize, imageSize);
-
-        // stroke("red")
-        // strokeWeight(2)
-        // rect(0, 0, imageSize + 1, imageSize + 1)
-        // image(host2, 0, imageSize + gap, imageSize, imageSize);
-
-        // stroke("red")
-        // strokeWeight(2)
-        // rect(0, 0, imageSize + 1, imageSize + 1)
-        // image(host3, 0, imageSize*2 + gap*2, imageSize, imageSize);
-
-        // stroke("red")
-        // strokeWeight(2)
-        // rect(0, 0, imageSize + 1, imageSize + 1)
-        // image(host4, 0, imageSize*3 + gap*3, imageSize, imageSize);
-      }
-
-      function draw() {
-        for (let i = 0; i < assets.length; i++) {
-          const asset = assets[i]
-          const level = asset.amp.getLevel()
-          console.log(level)
-          const x = 0
-          const y = i * (imageSize + gap)
-          const mask = createGraphics(imageSize, imageSize);
-          mask.fill(255)
-          mask.rect(0, 0, imageSize, imageSize)
-          // mask.fill(0)
-          mask.circle(imageSize/2, imageSize/2, level * 1000)
-          image(asset.imagem, x, y, imageSize, imageSize)
-          image(mask, x, y, imageSize, imageSize)
-        }
-        
-        // console.log('voza', ampa.getLevel())
-        // console.log('vozb', ampb.getLevel())
-        // console.log('vozc', ampc.getLevel())
-        // console.log('vozd', ampd.getLevel())
-      }
-
-      function mask(w, h, sz){
-        circle(w/2, h/2, sz)
-      }
-    </script> -->
   </body>
 </html>
